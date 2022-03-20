@@ -260,9 +260,7 @@ Error.stackTraceLimit = 300;
         };
         req.on('end', _end);
       } else {
-        _respond(500, JSON.stringify({
-          error: err.stack,
-        }));
+        _respond(500, 'Method not available');
       }
     } catch (err) {
       console.warn(err);
