@@ -11,6 +11,7 @@ const awsConfig = new AWS.Config({
 const s3 = new AWS.S3(awsConfig);
 
 const getObject = (bucket, key) => {
+  console.log(bucket, key);
     return new Promise(async (resolve, reject) => {
         const params = { Bucket: bucket, Key: key };
         s3.getObject(params, (error, data) => {

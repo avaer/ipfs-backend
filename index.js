@@ -34,6 +34,7 @@ const { SHA3 } = require('sha3');
 const { getExt, makePromise } = require('./utils.js');
 // const browserManager = require('./browser-manager.js');
 const { MAX_SIZE, IPFS_HTTP_PORT, IPFS_PORT } = require('./constants.js');
+const {putObject, getObject} = require('./aws');
 
 let CERT = undefined;
 let PRIVKEY = undefined;
@@ -99,6 +100,67 @@ Error.stackTraceLimit = 300;
   };
 
   const addUrl = `http://127.0.0.1:${IPFS_PORT}/api/v0/add`;
+
+  const _handleIpfsRequest = async ( method , req, res) =>{
+    const match = req.url.match(/^(\/ipfs)?(\/[a-z0-9]+)(?:\/([^\/]*))?$/i);
+    if (match) {
+      console.log('got match', req.url, match);
+      let url;
+      if (match[1]) { // /ipfs/ API
+        url = req.url;
+      } else { // our / API
+        url = (match[1] || '/ipfs') + match[2];
+      }
+
+
+      if(method === 'GET'){
+        const proxy = httpProxy.createProxyServer({});
+        req.url = url;
+        proxy.on('proxyRes', (proxyRes, req, res) => {
+          const filename = match[3] || '';
+          const overrideContentTypeToJs = /\.(?:js|tjs|rtfjs)$/.test(filename);
+          console.log('override content type? ' + filename + ' : ' + overrideContentTypeToJs);
+          console.log(res.headers);
+          console.log(proxyRes.headers);
+          if (overrideContentTypeToJs) {
+            proxyRes.headers['content-type'] = 'application/javascript';
+          }
+        });
+        proxy
+        .web(req, res, {
+          target: `http://127.0.0.1:${IPFS_HTTP_PORT}`,
+          // secure: false,
+          // changeOrigin: true,
+        }, err => {
+          console.warn(err.stack);
+
+          res.statusCode = 500;
+          res.end();
+        });
+      }else{
+
+        let obj = await getObject('IPFS-CACHE', url);
+
+        if(obj){
+          return res.end(obj);
+        }
+
+        putObject('IPFS-CACHE', url, {
+          headers: res.headers
+        }).then(()=>{
+          res.end();
+        })
+      }
+
+
+    } else {
+      console.log('no match', req.url);
+
+      res.statusCode = 404;
+      res.end();
+    }
+  }
+
   const _handleIpfs = async (req, res) => {
     const _respond = (statusCode, body) => {
       res.statusCode = statusCode;
@@ -125,42 +187,7 @@ Error.stackTraceLimit = 300;
         res.statusCode = 200;
         res.end();
       } else if (method === 'GET') {
-        const match = req.url.match(/^(\/ipfs)?(\/[a-z0-9]+)(?:\/([^\/]*))?$/i);
-        if (match) {
-          console.log('got match', req.url, match);
-          let url;
-          if (match[1]) { // /ipfs/ API
-            url = req.url;
-          } else { // our / API
-            url = (match[1] || '/ipfs') + match[2];
-          }
-          const proxy = httpProxy.createProxyServer({});
-          req.url = url;
-          proxy.on('proxyRes', (proxyRes, req, res) => {
-            const filename = match[3] || '';
-            const overrideContentTypeToJs = /\.(?:js|tjs|rtfjs)$/.test(filename);
-            console.log('override content type? ' + filename + ' : ' + overrideContentTypeToJs);
-            if (overrideContentTypeToJs) {
-              proxyRes.headers['content-type'] = 'application/javascript';
-            }
-          });
-          proxy
-            .web(req, res, {
-              target: `http://127.0.0.1:${IPFS_HTTP_PORT}`,
-              // secure: false,
-              // changeOrigin: true,
-            }, err => {
-              console.warn(err.stack);
-
-              res.statusCode = 500;
-              res.end();
-            });
-        } else {
-          console.log('no match', req.url);
-
-          res.statusCode = 404;
-          res.end();
-        }
+        _handleIpfsRequest('GET', req, res);
       } else if (method === 'POST') {
         const contentType = headers['content-type'];
         const contentLength = parseInt(headers['content-length'], 10) || 0;
@@ -259,7 +286,10 @@ Error.stackTraceLimit = 300;
           }
         };
         req.on('end', _end);
-      } else {
+      } else if(method === 'HEAD'){
+        _handleIpfsRequest('HEAD', req,res);
+      }
+       else {
         _respond(500, 'Method not available');
       }
     } catch (err) {
