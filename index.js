@@ -117,6 +117,7 @@ Error.stackTraceLimit = 300;
         const proxy = httpProxy.createProxyServer({});
         req.url = url;
         proxy.on('proxyRes', (proxyRes, req, res) => {
+          debugger;
           const filename = match[3] || '';
           const overrideContentTypeToJs = /\.(?:js|tjs|rtfjs)$/.test(filename);
           console.log('override content type? ' + filename + ' : ' + overrideContentTypeToJs);
@@ -287,6 +288,7 @@ Error.stackTraceLimit = 300;
         };
         req.on('end', _end);
       } else if(method === 'HEAD'){
+        debugger;
         _handleIpfsRequest('HEAD', req,res);
       }
        else {
