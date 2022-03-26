@@ -33,7 +33,7 @@ const { SHA3 } = require('sha3');
 // const blockchain = require('./blockchain.js');
 const { getExt, makePromise } = require('./utils.js');
 // const browserManager = require('./browser-manager.js');
-const { MAX_SIZE, IPFS_HTTP_PORT, IPFS_PORT } = require('./constants.js');
+const { MAX_SIZE, IPFS_HTTP_PORT, IPFS_PORT, ALLOWED_METHODS, ALLOWED_HOSTS } = require('./constants.js');
 
 let CERT = undefined;
 let PRIVKEY = undefined;
@@ -124,7 +124,7 @@ Error.stackTraceLimit = 300;
       if (method === 'OPTIONS') {
         res.statusCode = 200;
         res.end();
-      } else if (method === 'GET') {
+      } else if (ALLOWED_METHODS.includes(method)) {
         const match = req.url.match(/^(\/ipfs)?(\/[a-z0-9]+)(?:\/([^\/]*))?$/i);
         if (match) {
           console.log('got match', req.url, match);
@@ -275,7 +275,7 @@ Error.stackTraceLimit = 300;
     try {
       const o = url.parse(protocol + '//' + (req.headers['host'] || '') + req.url);
       console.log('got req', req.method, o);
-      if (o.host === 'ipfs.exokit.org' || o.host === 'ipfs.webaverse.com') {
+      if (ALLOWED_HOSTS.includes(o.host)) {
         if (o.pathname === '/upload-folder' && ['POST', 'OPTIONS'].includes(req.method)) {
           _handleUploadFolder(req, res);
         } else {

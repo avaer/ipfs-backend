@@ -17,9 +17,27 @@ Node server hosted on AWS, mainly used for REST endpoints.
 
 You can get these credentials from Avaer.
 
-3. Create a `cert/` folder. Create 2 new files inside: `fullchain.pem` and `privkey.pem`. Ask Avaer for the certificates.
+3. Create a `cert/` folder. Create 2 new files inside: `fullchain.pem` and `privkey.pem`. Copy the certificates from `https://github.com/webaverse/app` under the folder `certs-local`
 
-4. `npm run start` (forever) or `npm run dev` (nodemon).
+4. Download the ipfs binary from here `https://dist.ipfs.io/#go-ipfs`
+
+5. Extract the ipfs binary and run the command `./ipfs daemon`. 
+
+6. Confirm the output of IPFS 
+
+    ```sh
+
+            Swarm announcing /ip4/192.168.18.7/udp/4001/quic
+            Swarm announcing /ip6/::1/tcp/4001
+            Swarm announcing /ip6/::1/udp/4001/quic
+            API server listening on /ip4/127.0.0.1/tcp/5001
+            WebUI: http://127.0.0.1:5001/webui
+            Gateway (readonly) server listening on /ip4/127.0.0.1/tcp/8080
+            Daemon is ready
+
+    ```
+
+7. `npm run start` (forever) or `npm run dev`.
 
 ## API Docs
 
