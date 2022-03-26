@@ -113,16 +113,13 @@ Error.stackTraceLimit = 300;
       }
 
 
-      if(method === 'GET'){
+      if(method === 'GET' || method === 'HEAD'){
         const proxy = httpProxy.createProxyServer({});
         req.url = url;
         proxy.on('proxyRes', (proxyRes, req, res) => {
           debugger;
           const filename = match[3] || '';
           const overrideContentTypeToJs = /\.(?:js|tjs|rtfjs)$/.test(filename);
-          console.log('override content type? ' + filename + ' : ' + overrideContentTypeToJs);
-          console.log(res.headers);
-          console.log(proxyRes.headers);
           if (overrideContentTypeToJs) {
             proxyRes.headers['content-type'] = 'application/javascript';
           }
@@ -134,32 +131,16 @@ Error.stackTraceLimit = 300;
           // changeOrigin: true,
         }, err => {
           console.warn(err.stack);
-
           res.statusCode = 500;
           res.end();
         });
-      }else{
-
-        let obj = await getObject('IPFS-CACHE', url);
-
-        if(obj){
-          return res.end(obj);
-        }
-
-        putObject('IPFS-CACHE', url, {
-          headers: res.headers
-        }).then(()=>{
-          res.end();
-        })
-      }
-
-
-    } else {
+      } else {
       console.log('no match', req.url);
 
       res.statusCode = 404;
       res.end();
     }
+  }
   }
 
   const _handleIpfs = async (req, res) => {
@@ -307,7 +288,7 @@ Error.stackTraceLimit = 300;
     try {
       const o = url.parse(protocol + '//' + (req.headers['host'] || '') + req.url);
       console.log('got req', req.method, o);
-      if (o.host === 'ipfs.exokit.org' || o.host === 'ipfs.webaverse.com') {
+      if (o.host === 'ipfs.exokit.org' || o.host === 'ipfs.webaverse.com' || o.host === 'local.webaverse.com') {
         if (o.pathname === '/upload-folder' && ['POST', 'OPTIONS'].includes(req.method)) {
           _handleUploadFolder(req, res);
         } else {
