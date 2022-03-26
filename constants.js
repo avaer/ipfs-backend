@@ -8,8 +8,7 @@ const ALLOWED_METHODS = [
 
 const ALLOWED_HOSTS = [
   'ipfs.webaverse.com',
-  'ipfs.exokit.org',
-  'local.webaverse.com'
+  'ipfs.exokit.org'
 ]
 
 module.exports = {
